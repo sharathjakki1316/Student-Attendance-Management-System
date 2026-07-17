@@ -172,7 +172,7 @@ GitHub:
 https://github.com/sharathjakki1316
 
 LinkedIn:
-(Add your LinkedIn profile here)
+https://www.linkedin.com/in/venkata-sharath-kumar-jakki-536947329/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BmIWy1E%2FPRjOu70ry1tQNpg%3D%3D
 
 ---
 
