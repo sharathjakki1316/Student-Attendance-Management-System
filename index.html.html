@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Sheet</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        h2 { margin: 0; color: #333; text-align: center; }
+
+        /* Top Controls: Date, Subject, Save */
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label { font-size: 12px; font-weight: bold; color: #555; }
+        .form-control { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+        .btn-download {
+            background-color: #217346; color: white; border: none; padding: 10px 20px;
+            border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; gap: 5px; margin-left: auto;
+        }
+        .btn-download:hover { background-color: #1e6b41; }
+
+        /* Dashboard: Counters and Global Actions */
+        .dashboard-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background-color: #eef2f5;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dce3e9;
+        }
+
+        .counters {
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .count-present { color: #28a745; }
+        .count-absent { color: #dc3545; }
+
+        .global-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-mark-all {
+            border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white;
+        }
+        .btn-mark-all.present { background-color: #28a745; }
+        .btn-mark-all.absent { background-color: #dc3545; }
+
+        /* Lab Filters */
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-filter {
+            background-color: #fff; border: 2px solid #007bff; color: #007bff;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .btn-filter.active, .btn-filter:hover {
+            background-color: #007bff; color: white;
+        }
+
+        /* Table Styles */
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px 12px; text-align: left; vertical-align: middle; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #333; text-align: center; }
+        
+        th:nth-child(1) { width: 60px; text-align: center; }
+        th:nth-child(2) { width: 130px; text-align: center; }
+        th:nth-child(4) { width: 120px; text-align: center; }
+
+        tr:nth-child(even) { background-color: #fbfbfb; }
+        tr:hover { background-color: #f1f7fd; }
+
+        /* Toggle Button Styles */
+        .status-dot { font-size: 18px; margin-right: 8px; vertical-align: middle; transition: color 0.2s; }
+        .dot-present { color: #28a745; }
+        .dot-absent { color: #dc3545; }
+
+        .btn-toggle {
+            width: 100%; padding: 8px; border: 2px solid; border-radius: 4px;
+            font-weight: bold; font-size: 15px; text-align: center; cursor: pointer;
+            transition: 0.1s;
+        }
+        .btn-toggle.present { color: #28a745; background-color: #e8f5e9; border-color: #28a745; }
+        .btn-toggle.absent { color: #dc3545; background-color: #fbe9eb; border-color: #dc3545; }
+        .btn-toggle:active { transform: scale(0.95); }
+
+        td:nth-child(1), td:nth-child(2) { text-align: center; font-family: 'Consolas', monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Attendance Sheet - Class EN19</h2>
+        
+        <div class="controls-row">
+            <div class="input-group">
+                <span class="input-label">Date:</span>
+                <input type="date" id="attendanceDate" class="form-control">
+            </div>
+
+            <div class="input-group">
+                <span class="input-label">Subject:</span>
+                <select id="subjectSelect" class="form-control" onchange="saveSubject()">
+                    <option value="TAFL">TAFL</option>
+                    <option value="SE">SE</option>
+                    <option value="AI">AI</option>
+                    <option value="DAA">DAA</option>
+                    <option value="CS">CS</option>
+                    <option value="CCS">CCS</option>
+                    <option value="QLA - 3">QLA - 3</option>
+                </select>
+            </div>
+
+            <button onclick="downloadCSV()" class="btn-download">💾 Save CSV</button>
+        </div>
+
+        <div class="dashboard-row">
+            <div class="counters">
+                <span class="count-present">Total Present: <span id="valPresent">0</span></span>
+                <span class="count-absent">Total Absent: <span id="valAbsent">0</span></span>
+            </div>
+            <div class="global-actions">
+                <button onclick="markAll('P')" class="btn-mark-all present">✓ Mark All Present</button>
+                <button onclick="markAll('A')" class="btn-mark-all absent">✗ Mark All Absent</button>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <button onclick="setFilter('ALL')" id="btnFilterAll" class="btn-filter active">All Students</button>
+            <button onclick="setFilter('LAB_A')" id="btnFilterLabA" class="btn-filter">Lab A</button>
+            <button onclick="setFilter('LAB_B')" id="btnFilterLabB" class="btn-filter">Lab B</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>Sr. No</th>
+                    <th>Enroll No</th>
+                    <th>Student Name</th>
+                    <th>Attendance</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Rows populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const students = [
+        { sr: 1, enroll: "92460118193", name: "KANITHI AJAY KUMAR" },
+        { sr: 2, enroll: "92460118196", name: "YATHAM VENU" },
+        { sr: 3, enroll: "92460118203", name: "MALLIDI MOHITH REDDY" },
+        { sr: 4, enroll: "92460118211", name: "SHLOK UPRIT" },
+        { sr: 5, enroll: "92460118237", name: "NIDAMANURI NAYANA SRI" },
+        { sr: 6, enroll: "92460118241", name: "PALLAPU AKIRANANDHAN" },
+        { sr: 7, enroll: "92460118244", name: "KOLA KALYAN VEERA SATYA DEV" },
+        { sr: 8, enroll: "92460118245", name: "TELLA LIKITH KRISHNA YADAV" },
+        { sr: 9, enroll: "92460118246", name: "SAI RISHIKESH AMUDA" },
+        { sr: 10, enroll: "92460118269", name: "GONELA SAI SRI VENKATA KARTHIKEYA" },
+        { sr: 11, enroll: "92460118270", name: "KETHA VEERA SRI NARENDRA" },
+        { sr: 12, enroll: "92460118276", name: "SAMMIDI BALA VARDHAN" },
+        { sr: 13, enroll: "92460118278", name: "CHONGA VEERA VENKATA SATYANARAYANA" },
+        { sr: 14, enroll: "92460118281", name: "TUNGALA LOKESH NAGASAI" },
+        { sr: 15, enroll: "92460118285", name: "HANMAMOLLA RADHA KRISHNA" },
+        { sr: 16, enroll: "92460118286", name: "PONNA SARATH CHANDRA SIVA DURGA VINAYAK" },
+        { sr: 17, enroll: "92460118292", name: "KONDA PUNEETH KUMAR" },
+        { sr: 18, enroll: "92460118301", name: "VENKATA SHARATH KUMAR JAKKI" },
+        { sr: 19, enroll: "92460118303", name: "K E SHIVA KUMAR" },
+        { sr: 20, enroll: "92460118307", name: "IJJU AJAY" },
+        { sr: 21, enroll: "92460118310", name: "GONGALREDDY NAGENDRA REDDY" },
+        { sr: 22, enroll: "92460118317", name: "LIKITHA Y" },
+        { sr: 23, enroll: "92460118321", name: "BHIMIREDDY SREE GOWRI" },
+        { sr: 24, enroll: "92460118331", name: "KOLIPAKA SHIVA SAI" },
+        { sr: 25, enroll: "92460118332", name: "DHANEKULA SATHVIK" },
+        { sr: 26, enroll: "92460118340", name: "P SARANYA" },
+        { sr: 27, enroll: "92460118341", name: "TATIKONDA SAI SARAGN" },
+        { sr: 28, enroll: "92460118346", name: "YADLAPALLI SRI VYSHNAVI" },
+        { sr: 29, enroll: "92460118349", name: "MARRIPUDI KOMAL KODANDA PANI" },
+        { sr: 30, enroll: "92460118355", name: "MAMIDIPALLI SRUTHI VARSHITHA" },
+        { sr: 31, enroll: "92460118364", name: "SAHASRA" },
+        { sr: 32, enroll: "92460118365", name: "SHALINI REDDY NADAGOUNI" },
+        { sr: 33, enroll: "92460118370", name: "MANDHATI SAI GANESH" },
+        { sr: 34, enroll: "92460118378", name: "YAMALA SHALINI" },
+        { sr: 35, enroll: "92460118386", name: "EMMADI BANUTEJA" },
+        { sr: 36, enroll: "92460118396", name: "PUNURU KASI BALA VISWANATH REDDY" },
+        { sr: 37, enroll: "92460118400", name: "SARANYA GUNDA" },
+        { sr: 38, enroll: "92460118418", name: "ALUMOLU LAKSHMI NAGA SURYA TEJA" },
+        { sr: 39, enroll: "92460118441", name: "KURRE SRI DURGA KIRAN TEJA" },
+        { sr: 40, enroll: "92460118444", name: "PABBATHI PRASANTH MANI SURYA GUPTA" },
+        { sr: 41, enroll: "92460118463", name: "RACHAMADUGU PURNA SAHITHI" },
+        { sr: 42, enroll: "92460118466", name: "ANALA GANESH KUMAR" },
+        { sr: 43, enroll: "92460118472", name: "PENNERU YASHMA" },
+        { sr: 44, enroll: "92460118481", name: "PAMIDI SRINIVAS" },
+        { sr: 45, enroll: "92460118487", name: "PERABATTULA PUJITHA" },
+        { sr: 46, enroll: "92460118501", name: "K NIRANJAN" },
+        { sr: 47, enroll: "92460118503", name: "MORABOINA SRI LAKSHMI" },
+        { sr: 48, enroll: "92460118520", name: "DASA AKSHAY KUMAR" },
+        { sr: 49, enroll: "92460118525", name: "PALAGIRI NAVADEEP REDDY" },
+        { sr: 50, enroll: "92460118535", name: "ASPARI SAI NIKHIL REDDY" },
+        { sr: 51, enroll: "92460118536", name: "BELUM RAJA SIMHA REDDY" },
+        { sr: 52, enroll: "92460118537", name: "BOGOLI VEERA SIVA REDDY" },
+        { sr: 53, enroll: "92460118542", name: "A BHARATH KUMAR" },
+        { sr: 54, enroll: "92460118545", name: "MARIYALA RAGHUBHAVESH" },
+        { sr: 55, enroll: "92460118546", name: "ANNEM VEERANJI REDDY" },
+        { sr: 56, enroll: "92460118555", name: "BHURAM JAGADEESH" },
+        { sr: 57, enroll: "92460118557", name: "UPPARA RAHUL SAGAR" },
+        { sr: 58, enroll: "92460118559", name: "NANDIKANUMA YAGNA KOWSYA" },
+        { sr: 59, enroll: "92460118560", name: "KONJETI VENKATESWARA REDDY" },
+        { sr: 60, enroll: "92460118562", name: "KURTE MALLIKARJUN REDDY" },
+        { sr: 61, enroll: "92460118571", name: "KORIBILLI POOJIT KUMAR" },
+        { sr: 62, enroll: "92460118573", name: "KOTHAMASU NUTAN SAI SANTHOSH" }
+    ];
+
+    let currentFilter = 'ALL'; 
+    
+    // Load Saved Data or default to all 'P'
+    function loadSavedData() {
+        const saved = localStorage.getItem('attendanceData');
+        let data = saved ? JSON.parse(saved) : {};
+        
+        students.forEach(s => {
+            if(!data[s.sr]) data[s.sr] = "P";
+        });
+        return data;
+    }
+
+    let savedData = loadSavedData();
+    const tableBody = document.getElementById('tableBody');
+
+    // Filter Logic
+    function setFilter(filterType) {
+        currentFilter = filterType;
+        
+        document.getElementById('btnFilterAll').classList.remove('active');
+        document.getElementById('btnFilterLabA').classList.remove('active');
+        document.getElementById('btnFilterLabB').classList.remove('active');
+        
+        if(filterType === 'ALL') document.getElementById('btnFilterAll').classList.add('active');
+        if(filterType === 'LAB_A') document.getElementById('btnFilterLabA').classList.add('active');
+        if(filterType === 'LAB_B') document.getElementById('btnFilterLabB').classList.add('active');
+        
+        renderTable();
+    }
+
+    // Get the students currently visible based on the filter
+    // Lab A = S.No 1 to 31 | Lab B = S.No 32 to 62
+    function getVisibleStudents() {
+        if (currentFilter === 'LAB_A') {
+            return students.filter(s => s.sr >= 1 && s.sr <= 31);
+        } else if (currentFilter === 'LAB_B') {
+            return students.filter(s => s.sr >= 32 && s.sr <= 62);
+        }
+        return students;
+    }
+
+    // Render Table based on filter
+    function renderTable() {
+        let html = '';
+        let visibleStudents = getVisibleStudents();
+
+        // Use 'index + 1' to display sequential numbering based on the current view
+        visibleStudents.forEach((student, index) => {
+            const status = savedData[student.sr];
+            const dotClass = status === "P" ? "dot-present" : "dot-absent";
+            const btnClass = status === "P" ? "present" : "absent";
+            const btnText = status === "P" ? "P" : "A";
+            const displaySr = index + 1; // Creates the 1, 2, 3... sequence
+
+            html += `
+                <tr id="row-${student.sr}">
+                    <td>${displaySr}</td>
+                    <td>${student.enroll}</td>
+                    <td><span id="dot-${student.sr}" class="status-dot ${dotClass}">●</span> ${student.name}</td>
+                    <td>
+                        <button id="btn-${student.sr}" class="btn-toggle ${btnClass}" onclick="toggleStatus(${student.sr})">
+                            ${btnText}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = html;
+        
+        updateCounters();
+
+        const savedSubject = localStorage.getItem('attendanceSubject');
+        if (savedSubject) {
+            document.getElementById('subjectSelect').value = savedSubject;
+        }
+    }
+
+    // Toggle logic (Clicking P makes it A, clicking A makes it P)
+    function toggleStatus(id) {
+        const currentStatus = savedData[id];
+        const newStatus = currentStatus === "P" ? "A" : "P";
+        
+        savedData[id] = newStatus;
+        localStorage.setItem('attendanceData', JSON.stringify(savedData));
+
+        const dot = document.getElementById(`dot-${id}`);
+        const btn = document.getElementById(`btn-${id}`);
+        
+        if (dot && btn) {
+            if (newStatus === "P") {
+                dot.className = "status-dot dot-present";
+                btn.className = "btn-toggle present";
+                btn.innerText = "P";
+            } else {
+                dot.className = "status-dot dot-absent";
+                btn.className = "btn-toggle absent";
+                btn.innerText = "A";
+            }
+        }
+
+        updateCounters();
+    }
+
+    // Update the Present/Absent Counter dynamically based on current view
+    function updateCounters() {
+        let presentCount = 0;
+        let absentCount = 0;
+        
+        let visibleStudents = getVisibleStudents();
+
+        visibleStudents.forEach(s => {
+            if(savedData[s.sr] === "P") presentCount++;
+            else absentCount++;
+        });
+
+        document.getElementById('valPresent').innerText = presentCount;
+        document.getElementById('valAbsent').innerText = absentCount;
+    }
+
+    // Mark ALL Present or ALL Absent specifically for the visible list
+    function markAll(status) {
+        let visibleStudents = getVisibleStudents();
+        let viewName = currentFilter === 'ALL' ? "ALL 62 students" : 
+                       (currentFilter === 'LAB_A' ? "ALL 31 students in Lab A" : "ALL 31 students in Lab B");
+
+        if(confirm(`Are you sure you want to mark ${viewName} as ${status === 'P' ? 'PRESENT' : 'ABSENT'}?`)) {
+            visibleStudents.forEach(s => {
+                savedData[s.sr] = status;
+            });
+            localStorage.setItem('attendanceData', JSON.stringify(savedData));
+            renderTable(); // Re-render to update UI and counters
+        }
+    }
+
+    // Save Subject Preference
+    function saveSubject() {
+        const subject = document.getElementById('subjectSelect').value;
+        localStorage.setItem('attendanceSubject', subject);
+    }
+
+    // Download CSV Function
+    function downloadCSV() {
+        const date = document.getElementById('attendanceDate').value || 'Unknown_Date';
+        const subject = document.getElementById('subjectSelect').value;
+        let labName = currentFilter === 'ALL' ? 'All' : (currentFilter === 'LAB_A' ? 'Lab_A' : 'Lab_B');
+        
+        let htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <!--[if gte mso 9]>
+            <xml>
+                <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                        <x:ExcelWorksheet>
+                            <x:Name>Sheet 1</x:Name>
+                            <x:WorksheetOptions>
+                                <x:DisplayGridlines/>
+                            </x:WorksheetOptions>
+                        </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+                table { border-collapse: collapse; }
+                th, td { border: 1px solid black; padding: 5px; text-align: left; }
+                .present { background-color: #c6efce; color: #006100; font-weight: bold; text-align: center; }
+                .absent { background-color: #ffc7ce; color: #9c0006; font-weight: bold; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr>
+                    <th>Master Sr No</th>
+                    <th>Enrollment No</th>
+                    <th>Student Name</th>
+                    <th>Attendance (${subject} - ${date})</th>
+                </tr>`;
+        
+        let visibleStudents = getVisibleStudents();
+
+        visibleStudents.forEach(student => {
+            const status = savedData[student.sr];
+            const cellClass = status === "P" ? "present" : "absent";
+            htmlContent += `
+                <tr>
+                    <td>${student.sr}</td>
+                    <td>${student.enroll}</td>
+                    <td>${student.name}</td>
+                    <td class="${cellClass}">${status}</td>
+                </tr>`;
+        });
+
+        htmlContent += `
+            </table>
+        </body>
+        </html>`;
+
+        const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Attendance_${subject}_${labName}_${date}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    // Init
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+    renderTable();
+
+</script>
+
+</body>
+</html>
